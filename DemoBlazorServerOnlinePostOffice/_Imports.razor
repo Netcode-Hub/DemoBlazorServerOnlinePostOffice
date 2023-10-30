@@ -1,0 +1,32 @@
+﻿@using System.Net.Http
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+@using Microsoft.JSInterop
+@using DemoBlazorServerOnlinePostOffice
+@using DemoBlazorServerOnlinePostOffice.Shared
+
+
+@* usings *@
+@using DemoBlazorServerOnlinePostOffice.Data.Models
+@using DemoBlazorServerOnlinePostOffice.Pages
+@using DemoBlazorServerOnlinePostOffice.Services
+@using DemoBlazorServerOnlinePostOffice.Data
+@using DemoBlazorServerOnlinePostOffice.Authentication
+@using System
+@using System.IO
+@using Microsoft.AspNetCore.Hosting
+@using Microsoft.Extensions.Logging
+@inject ILogger<SendItemPage> Logger
+@using System.Security.Claims
+
+@* injections *@
+@inject IPostService PostService
+@inject IAccountService AccountService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime js
+@inject IWebHostEnvironment Environment
+@inject AuthenticationStateProvider authStateProvider

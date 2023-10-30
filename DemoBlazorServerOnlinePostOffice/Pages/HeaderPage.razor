@@ -1,0 +1,43 @@
+﻿
+<nav class="navbar navbar-expand-lg navbar-light bg-light text-white" style=" background-image: linear-gradient(to right, #947FFF, #F875B3);">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#"> <i class="oi oi-signpost text-warning fw-bold fs-3"></i><span class="text-warning fs-3">Online Post Ofice</span></a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarText">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0 ">
+                <AuthorizeView>
+                    <Authorized>
+                        <li class="nav-item">
+                            <a class="nav-link text-primary fw-bold" style="cursor:pointer" @onclick="MyInboxClicked">My Inbox</a>
+                        </li>
+                    </Authorized>
+                </AuthorizeView>
+
+            </ul>
+            <span class="navbar-text" style="margin-right:10px;">
+                <a class="nav-link active float-end" aria-current="page" @onclick="HomePageClicked" style=" cursor:pointer;"><i class="oi oi-home"></i> Home</a>
+            </span>
+            <span class="navbar-text" style="margin-right:10px;">
+                <a class="nav-link active text-success float-end" aria-current="page" @onclick="HomePageClicked" style=" cursor:pointer"><i class="oi oi-info"></i> About</a>
+            </span>
+        </div>
+    </div>
+</nav>
+
+@code {
+    [Parameter] public EventCallback HandleHomePageClicked { get; set; }
+    [Parameter] public EventCallback HandleMyInboxClicked { get; set; }
+    private async Task HomePageClicked()
+    {
+        await HandleHomePageClicked.InvokeAsync();
+    }
+
+    private async Task MyInboxClicked()
+    {
+        await HandleMyInboxClicked.InvokeAsync();
+    }
+
+
+}

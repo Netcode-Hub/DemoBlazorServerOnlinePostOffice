@@ -1,0 +1,159 @@
+﻿@page "/"
+
+
+@* Static Header Content *@
+<HeaderPage HandleHomePageClicked="HandleHomeClicked"
+            HandleMyInboxClicked="HandleMyInboxClicked">
+</HeaderPage>
+
+@* Dynamic contents *@
+<PostOffcieBoxes Boxes="Boxes"
+                 ShowBoxList="ShowBoxList"
+                 HandleOpenBoxClicked="HandleOpenBoxClicked" />
+
+<RegisterPage ShowRegisterPage="ShowRegisterPage"
+              HandleRegisterOperationCallBack="HandleRegisterOperationCallBack" />
+
+
+<LoginPage ShowLoginPage="ShowLoginPage"
+           HandleLoginOperationCallBack="HandleLoginEventCallBack" />
+
+<AboutUsPage ShowAboutUsPage="ShowAboutUsPage"></AboutUsPage>
+<IndividualBox ShowIndividualPage="ShowIndividualPage" UserId="UserId" />
+
+@* Static Footer content *@
+<FooterPage HandleHomeClicked="HandleHomeClicked"
+            HandleRegisterClicked="HandleRegisterClicked"
+            HandleLoginClicked="HandleLoginClicked"
+            HandleAboutUsClicked="HandleAboutUsClicked"
+            HandleLogoutClicked="HandleLogoutClicked" />
+
+
+@code {
+
+    public bool ShowBoxList { get; set; }
+    public bool ShowIndividualPage { get; set; }
+    public bool ShowChatUsPage { get; set; }
+    public bool ShowAboutUsPage { get; set; }
+    public bool ShowLoginPage { get; set; }
+    public bool ShowRegisterPage { get; set; }
+    public int UserId { get; set; }
+    public List<Box> Boxes { get; set; } = new();
+
+    protected async override Task OnInitializedAsync()
+    {
+        await LoadBoxes();
+    }
+
+    private async Task LoadBoxes()
+    {
+        var results = await PostService.GetPostOfficeBoxes();
+        Boxes?.Clear();
+        foreach (var i in results)
+            Boxes!.Add(i);
+
+        ResetViews(); ShowBoxList = true;
+    }
+
+    private void ResetViews()
+    {
+        ShowBoxList = false;
+        ShowRegisterPage = false;
+        ShowLoginPage = false;
+        ShowAboutUsPage = false;
+        ShowChatUsPage = false;
+        ShowIndividualPage = false;
+
+    }
+
+
+    private void HandleHomeClicked()
+    {
+        ResetViews(); ShowBoxList = true;
+    }
+
+    private void HandleRegisterClicked()
+    {
+        ResetViews(); ShowRegisterPage = true;
+    }
+
+    private void HandleLoginClicked()
+    {
+        ResetViews(); ShowLoginPage = true;
+    }
+
+    private void HandleAboutUsClicked()
+    {
+        ResetViews(); ShowAboutUsPage = true;
+    }
+
+
+    private void HandleMyInboxClicked()
+    {
+        ResetViews(); ShowIndividualPage = true;
+    }
+
+    private async void HandleOpenBoxClicked(OpenBox openBox)
+    {
+        int userId = await PostService.OpenBoxAsync(openBox);
+        if (userId > 0)
+        {
+            UserId = userId;
+            ResetViews();
+            ShowIndividualPage = true;
+        }
+        else
+        {
+            await js.InvokeVoidAsync("alert", "Invalid Key");
+            return;
+        }
+
+    }
+
+    private async Task HandleLogoutClicked()
+    {
+        await UseAuthyenticationService(null!);
+        ResetViews(); ShowBoxList = true;
+    }
+
+
+    private async Task HandleRegisterOperationCallBack(UserAccountModel model)
+    {
+        var (flag, message) = await AccountService.RegisterAsync(model);
+        if (flag)
+        {
+            await js.InvokeVoidAsync("alert", message);
+            ResetViews(); ShowBoxList = true;
+        }
+        else
+        {
+            await js.InvokeVoidAsync("alert", message);
+            return;
+        }
+    }
+
+
+    private async Task HandleLoginEventCallBack(Login model)
+    {
+        string token = await AccountService.LoginAsync(model);
+        if (string.IsNullOrEmpty(token))
+        {
+            await js.InvokeVoidAsync("alert", "Invalid Email/Password");
+            return;
+        }
+        else
+        {
+            await js.InvokeVoidAsync("alert", token);
+            await UseAuthyenticationService(token);
+            ResetViews(); ShowBoxList = true;
+
+        }
+    }
+
+    private async Task UseAuthyenticationService(string token)
+    {
+        var customAuthStateProvider = (CustomAuthenticationStateProvider)authStateProvider;
+        await customAuthStateProvider.UpdateAuthenticationState(token);
+    }
+
+}

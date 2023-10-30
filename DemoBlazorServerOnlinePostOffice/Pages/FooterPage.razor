@@ -1,0 +1,73 @@
+﻿
+    <div class="container">
+        <footer class="d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top">
+            <div class="col-md-4 d-flex align-items-center">
+                <a href="/" class="mb-3 me-2 mb-md-0 text-muted text-decoration-none lh-1">
+                    <svg class="bi" width="30" height="24"><use xlink:href="#bootstrap" /></svg>
+                </a>
+                <span class="text-muted">&copy; 2023 Netcode Post Ofice, Inc</span>
+            </div>
+
+            <ul class="nav col-md-4 justify-content-end list-unstyled d-flex">
+                <li class="ms-3"><a class="text-muted link"><svg class="bi" width="24" height="24"><use xlink:href="#twitter" /></svg></a></li>
+                <li class="ms-3"><a class="text-muted link"><svg class="bi" width="24" height="24"><use xlink:href="#instagram" /></svg></a></li>
+                <li class="ms-3"><a class="text-muted link"><svg class="bi" width="24" height="24"><use xlink:href="#facebook" /></svg></a></li>
+            </ul>
+        </footer>
+    </div>
+
+    <div class="b-example-divider"></div>
+
+    <div class="container ">
+        <footer class="py-3 my-4">
+            <ul class="nav justify-content-center border-bottom pb-3 mb-3">
+                <li class="nav-item"><a class="nav-link link px-2 text-dark" @onclick="HomeClicked"> <i class="oi oi-home"></i> Home</a></li>
+                <AuthorizeView>
+                    <Authorized>
+                        <li class="nav-item"> <a class="nav-link px-2 text-danger link" @onclick="LogoutClicked"><i class="oi oi-power-standby"></i> Logout</a></li>
+                    </Authorized>
+                    <NotAuthorized>
+                    <li class="nav-item"><a class="nav-link px-2 text-info link" @onclick="RegisterClicked"> <i class="oi oi-contrast"></i>Register</a></li>
+                    <li class="nav-item"><a class="nav-link px-2 text-warning link" @onclick="LoginClicked"> <i class="oi oi-account-login"></i> Login</a></li>
+                    </NotAuthorized>
+                </AuthorizeView>
+            <li class="nav-item"><a class="nav-link px-2 text-success link" @onclick="AboutUsClicked"><i class="oi oi-info"></i> About Us</a></li>
+            </ul>
+            <p class="text-center text-primary"><i class="oi oi-location text-danger"></i> Accra Ghana, Inc</p>
+        </footer>
+    </div>
+<style>
+    .link {
+        cursor: pointer;
+    }
+</style>
+
+@code {
+    [Parameter] public EventCallback HandleHomeClicked { get; set; }
+    [Parameter] public EventCallback HandleLogoutClicked { get; set; }
+    [Parameter] public EventCallback HandleRegisterClicked { get; set; }
+    [Parameter] public EventCallback HandleLoginClicked { get; set; }
+    [Parameter] public EventCallback HandleAboutUsClicked { get; set; }
+
+    private async void HomeClicked()
+    {
+        await HandleHomeClicked.InvokeAsync();
+    }
+    private async void LogoutClicked()
+    {
+        await HandleLogoutClicked.InvokeAsync();
+    }
+    private async void RegisterClicked()
+    {
+        await HandleRegisterClicked.InvokeAsync();
+    }
+    private async void LoginClicked()
+    {
+        await HandleLoginClicked.InvokeAsync();
+    }
+    private async void AboutUsClicked()
+    {
+        await HandleAboutUsClicked.InvokeAsync();
+    }
+   
+}

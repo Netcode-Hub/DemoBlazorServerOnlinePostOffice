@@ -1,0 +1,167 @@
+﻿
+@if (ShowIndividualPage)
+{
+    <div class="container mt-3">
+        <div class="row">
+            <div class="card mt-2 border-1 shadow-lg">
+                <div class="card border-1 shadow-lg" style=" background-image: linear-gradient(to right, #947FFF, #F875B3);">
+                    <div class="card border-1 shadow-lg" style=" background-image: linear-gradient(to right, #947FFF, #F875B3);">
+                        <div class="card mt-1 border-1 shadow-lg" style=" background-image: linear-gradient(to right, #947FFF, #F875B3);">
+                            <div class="card border-1 shadow-lg mt-3">
+                                <div class="card border-1 shadow-lg m-4">
+                                    <div class="card-header">
+                                        <h5 class="text-primary">
+                                            Hi,
+                                            <AuthorizeView>
+                                                <Authorized>
+                                                    @context.User.Identity!.Name,
+                                                </Authorized>
+                                            </AuthorizeView>
+                                            Welcome
+                                        </h5>
+                                        @* <span class="float-end"><i class="oi oi-reload fw-bold text-success" style="cursor:pointer" @onclick="RefreshClicked"></i></span> *@
+                                    </div>
+                                    <div class="card-body">
+                                        <ul class="nav nav-tabs">
+                                            <li class="nav-item">
+                                                <a class="nav-link @InboxActiveTab text-center" aria-current="page" style="cursor:pointer;" @onclick="ReceivedPostFileClicked"><i class="oi oi-cloud-download text-warning"></i> Inbox</a>
+                                            </li>
+                                            <AuthorizeView>
+                                                <Authorized>
+                                                    <li class="nav-item">
+                                                        <a class="nav-link @PostFileActiveTab  text-center" aria-current="page" style="cursor:pointer;" @onclick="PostFileClicked"><i class="oi oi-cloud-upload text-primary"></i> Post File</a>
+                                                    </li>
+                                                </Authorized>
+                                            </AuthorizeView>
+
+                                        </ul>
+
+                                        <SendItemPage ShowSendFilePage="ShowSendFilePage"></SendItemPage>
+                                        <ReceivedPostPage ShowReceivedPostFile="ShowReceivedPostFile"
+                                                          MyDocuments="MyDocuments"
+                                                          HandleDeleteIconClicked="HandleDeleteIconClicked"
+                                                          HandleDownloadIconClicked="HandleDownloadIconClicked">
+                                        </ReceivedPostPage>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState> AuthState { get; set; }
+
+    [Parameter] public bool ShowIndividualPage { get; set; }
+    [Parameter] public int UserId { get; set; }
+    public bool ShowReceivedPostFile { get; set; }
+    public List<MyDocument> MyDocuments { get; set; } = new();
+    public string? PostFileActiveTab { get; set; }
+    public string? InboxActiveTab { get; set; }
+
+    public bool ShowSendFilePage { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        ResetAll();
+        SetTabsActive();
+        await GetUserFiles();
+        InboxActiveTab = "active";
+        ShowReceivedPostFile = true;
+    }
+
+    protected async override Task OnParametersSetAsync()
+    {
+        if (UserId > 0)
+            await LoadFilesFromDatabase(UserId);
+        else
+            return;
+    }
+
+    private void PostFileClicked()
+    {
+        ResetAll();
+        SetTabsActive();
+        ShowSendFilePage = true;
+        PostFileActiveTab = "active";
+    }
+
+
+    private async void ReceivedPostFileClicked()
+    {
+        ResetAll();
+        SetTabsActive();
+        ShowReceivedPostFile = true;
+        InboxActiveTab = "active";
+        await GetUserFiles();
+    }
+
+
+    private async Task GetUserFiles()
+    {
+        var user = (await AuthState).User;
+        if (user.Identity!.IsAuthenticated)
+        {
+            var userId = int.Parse(user.Claims.FirstOrDefault(_ => _.Type == ClaimTypes.NameIdentifier)!.Value);
+            await LoadFilesFromDatabase(userId);
+        }
+
+    }
+
+    private async Task LoadFilesFromDatabase(int userId)
+    {
+        var result = await PostService.MyDocuments(userId);
+        if (result.Count > 0)
+        {
+            MyDocuments?.Clear();
+            foreach (var i in result)
+                MyDocuments!.Add(i);
+        }
+    }
+
+    private async Task HandleDeleteIconClicked(MyDocument doc)
+    {
+        if (doc is null) return;
+
+        bool confirm = await js.InvokeAsync<bool>("confirm", $"Are you sure of deleting {doc.FileName}?");
+        if (!confirm) return;
+
+        var (flag, message) = await PostService.DeleteFileAsync(doc.FileId);
+        if (flag)
+        {
+            MyDocuments.Remove(MyDocuments.FirstOrDefault(_ => _.FileId == doc.FileId)!);
+            StateHasChanged();
+            await js.InvokeVoidAsync("alert", message);
+        }
+        else
+        {
+            await js.InvokeVoidAsync("alert", message);
+            return;
+        }
+
+    }
+
+    private async Task HandleDownloadIconClicked(MyDocument doc)
+    {
+        var fileURL = $"https://localhost:7009/files/{doc.FileName}";
+        await js.InvokeVoidAsync("triggerFileDownload", doc.FileName, fileURL);
+
+    }
+
+    private void ResetAll()
+    {
+        ShowSendFilePage = false;
+        ShowReceivedPostFile = false;
+    }
+
+    private void SetTabsActive()
+    {
+        PostFileActiveTab = "";
+        InboxActiveTab = "";
+    }
+}

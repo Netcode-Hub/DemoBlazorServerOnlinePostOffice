@@ -1,0 +1,76 @@
+﻿@if (ShowRegisterPage)
+{
+    <div class="container mt-3">
+        <div class="row">
+            <div class="col-md-8 offset-2 col-sm-12">
+                <div class="card mt-2 border-1 shadow-lg">
+                    <div class="card border-1 shadow-lg" style=" background-image: linear-gradient(to right, #947FFF, #F875B3);">
+                        <div class="card border-1 shadow-lg" style=" background-image: linear-gradient(to right, #947FFF, #F875B3);">
+                            <div class="card mt-1 border-1 shadow-lg" style=" background-image: linear-gradient(to right, #947FFF, #F875B3);">
+                                <div class="card border-1 shadow-lg">
+                                    <div class="card border-1 shadow-lg">
+                                        <div class="card-header"><h4>Create An Account</h4></div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class=" col-md-8 offset-2">
+                                                    <div class="card border-1 shadow-lg">
+                                                        <div class="card-header">Provide details to Register</div>
+                                                        <div class="card-body">
+                                                            <EditForm Model="RegisterModel" OnValidSubmit="HandleRegisterOperation">
+                                                                <DataAnnotationsValidator />
+                                                                <ValidationSummary />
+                                                                <div class="form-group">
+                                                                    <label class="form-label">Fullname</label>
+                                                                    <InputText class="form-control" @bind-Value="RegisterModel.Name" DisplayName="Fullname"></InputText>
+                                                                    <ValidationMessage For="()=>RegisterModel.Name" />
+                                                                </div>
+                                                                <div class="form-group mt-3">
+                                                                    <label class="form-label">Email Address</label>
+                                                                    <InputText class="form-control" @bind-Value="RegisterModel.Email" DisplayName="Email Address"></InputText>
+                                                                    <ValidationMessage For="()=>RegisterModel.Email" />
+                                                                </div>
+                                                                <div class="form-group mt-3">
+                                                                    <label class="form-label">Your Location</label>
+                                                                    <InputTextArea class="form-control" @bind-Value="RegisterModel.Location" DisplayName="Location"></InputTextArea>
+                                                                    <ValidationMessage For="()=>RegisterModel.Location" />
+                                                                </div>
+                                                                <div class="form-group mt-3">
+                                                                    <label class="form-label">Password</label>
+                                                                    <InputText class="form-control" @bind-Value="RegisterModel.Password" DisplayName="Password"></InputText>
+                                                                    <ValidationMessage For="()=>RegisterModel.Password" />
+                                                                </div>
+                                                                <div class="form-group mt-3">
+                                                                    <label class="form-label">Confirm Password</label>
+                                                                    <InputText class="form-control" @bind-Value="RegisterModel.ConfirmPassword" DisplayName="Confirm Password"></InputText>
+                                                                    <ValidationMessage For="()=>RegisterModel.ConfirmPassword" />
+                                                                </div>
+                                                                <div class="form-group mt-4">
+                                                                    <button type="submit" class="btn btn-success float-end">Create Account</button>
+                                                                </div>
+                                                            </EditForm>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool ShowRegisterPage { get; set; }
+    private UserAccountModel RegisterModel { get; set; } = new();
+    [Parameter] public EventCallback<UserAccountModel> HandleRegisterOperationCallBack { get; set; }
+    private async Task HandleRegisterOperation()
+    {
+        await HandleRegisterOperationCallBack.InvokeAsync(RegisterModel);
+        RegisterModel = new UserAccountModel();
+    }
+}

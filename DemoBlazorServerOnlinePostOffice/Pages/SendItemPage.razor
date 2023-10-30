@@ -1,0 +1,141 @@
+﻿
+<AuthorizeView>
+    <Authorized>
+        @if (ShowSendFilePage)
+        {
+            <div class="container mt-4">
+                <div class="row">
+                    <div class="col-md-8 offset-2">
+                        <EditForm Model="FileSentModel" OnValidSubmit="HandleSend">
+                            <ChildContent Context="me">
+                                <DataAnnotationsValidator />
+                                <ValidationSummary />
+                                <div class="card border-1 shadow-lg" style=" background-image: linear-gradient(to right, #947FFF, #F875B3);">
+                                    <div class="card border-1 shadow-lg" style=" background-image: linear-gradient(to right, #947FFF, #F875B3);">
+                                        <div class="card mt-2 border-1 shadow-lg">
+                                            <div class="row">
+                                                <div class="col-md-8 offset-2">
+                                                    <div class="card mb-5 mt-5">
+                                                        <div class="card-header">Send Item To Post</div>
+                                                        <div class="card-body">
+                                                            <div class="form-group">
+                                                                <label class="form-label">Box Number</label>
+                                                                <InputNumber DisplayName="Box Number" @bind-Value="FileSentModel.ReceiverBoxNumber" class="form-control"></InputNumber>
+                                                                <ValidationMessage For="()=> FileSentModel.ReceiverBoxNumber"></ValidationMessage>
+                                                            </div>
+                                                            <div class="form-group mt-3">
+                                                                <label class="form-label">Select File</label>
+                                                                <InputFile OnChange="@LoadFiles" multiple class="form-control" />
+                                                                <ValidationMessage For="()=> FileSentModel.FileNames"></ValidationMessage>
+                                                            </div>
+                                                            <div class="mt-3">
+                                                                <button class="btn btn-primary" type="submit">Send Post</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </ChildContent>
+                        </EditForm>
+                    </div>
+                </div>
+            </div>
+        }
+    </Authorized>
+</AuthorizeView>
+@code {
+    [CascadingParameter] private Task<AuthenticationState> AuthState { get; set; }
+    [Parameter] public bool ShowSendFilePage { get; set; }
+    public FileSentModel FileSentModel { get; set; } = new();
+    private async Task HandleSend()
+    {
+        if (FileSentModel is null) return;
+
+        if (FileSentModel.ReceiverBoxNumber == 0 && FileSentModel.FileNames is null)
+        {
+            await js.InvokeVoidAsync("alert", "Sorry, you can't send post without file and box number. Thanks");
+            return;
+        }
+        await SAveUploadedFiles(LoadedFiles);
+
+        //call a service
+
+        var user = (await AuthState).User;
+        if (user.Identity!.IsAuthenticated)
+        {
+            var userId = int.Parse(user.Claims.FirstOrDefault(_ => _.Type == ClaimTypes.NameIdentifier)!.Value);
+            FileSentModel.SenderId = userId;
+            FileSentModel.FileNames = UploadedFilesName;
+            FileSentModel.DateSent = DateTime.Now;
+            var (flag, message) = await PostService.SendFiles(FileSentModel);
+            if (!flag)
+            {
+                await js.InvokeVoidAsync("alert", message);
+                return;
+            }
+            await js.InvokeVoidAsync("alert", message);
+            FileSentModel = new FileSentModel();
+        }
+
+
+
+
+
+    }
+
+
+    private List<IBrowserFile> LoadedFiles = new();
+    private List<string> UploadedFilesName = new();
+    private long maxFileSize = 5242880; /* 5MB */
+    private int maxAllowedFiles = 5;
+
+
+    //Prepare the files by validating them and add to the container for ready-uploading, which wait for form to be submited and then get uploaded.
+    private async Task LoadFiles(InputFileChangeEventArgs e)
+    {
+        LoadedFiles?.Clear();
+        foreach (var file in e.GetMultipleFiles(maxAllowedFiles))
+        {
+            try
+            {
+                //Check file size
+                if (file.Size > maxFileSize)
+                {
+                    await js.InvokeVoidAsync("alert", $"Sorry {file.Name} must be maximumly around 5MB");
+                    return;
+                }
+                // Search to see if the file already exist.
+                string[] files = Directory.GetFiles(Path.Combine("wwwroot", "Files"), file.Name, SearchOption.AllDirectories);
+                if (files.Count() > 0)
+                {
+                    await js.InvokeVoidAsync("alert", $"Sorry {file.Name} already uploaded");
+                    return;
+                }
+                LoadedFiles!.Add(file);
+            }
+            catch (Exception ex)
+            {
+                await js.InvokeVoidAsync("alert", ex.Message);
+            }
+        }
+    }
+
+
+
+    //When Form is Submited, then save files to the folder and return llist of the files name  inthe list of string created so we can add to the database.
+    private async Task SAveUploadedFiles(List<IBrowserFile> files)
+    {
+        UploadedFilesName?.Clear();
+        foreach (var file in files)
+        {
+            UploadedFilesName!.Add(file.Name);
+            var path = Path.Combine(Environment.WebRootPath, "Files", file.Name);
+
+            await using FileStream fs = new(path, FileMode.Create);
+            await file.OpenReadStream(maxFileSize).CopyToAsync(fs);
+        }
+    }
+}

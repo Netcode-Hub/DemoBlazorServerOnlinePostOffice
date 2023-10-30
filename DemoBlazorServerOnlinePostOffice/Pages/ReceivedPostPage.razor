@@ -1,0 +1,64 @@
+﻿@using System.Security.Claims
+@if (ShowReceivedPostFile)
+{
+
+    if (MyDocuments.Count > 0)
+    {
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Date & Time</th>
+                    <th>Sender</th>
+                    <th>File</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in MyDocuments.OrderByDescending(_ => _.DateSent))
+                {
+                    <tr>
+                        <td>@item.DateSent!.Value.ToString("dd-MMM-yy hh:MM:ss")</td>
+                        <td>@item.SenderName</td>
+                        <td>@item.FileName</td>
+                        <td>
+                            <div class="hstack gap-2">
+                                <AuthorizeView>
+                                    <Authorized>
+                                        <i class="oi oi-data-transfer-download" title="Download @item.FileName" style="cursor:pointer" @onclick="()=> DownloadIconClicked(item)"></i>
+                                        <i class="oi oi-trash text-danger" title="Delete @item.FileName" style="cursor:pointer" @onclick="()=> DeleteIconClicked(item)"></i>
+                                    </Authorized>
+                                    <NotAuthorized><span class="text-info">Sign In to perform Actions</span></NotAuthorized>
+                                </AuthorizeView>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+
+        </table>
+    }
+    else
+    {
+        <div class="alert alert-info mt-3">You have no Post</div>
+    }
+}
+
+
+@code {
+    [Parameter] public bool ShowReceivedPostFile { get; set; }
+    public bool ShowEmptyContainer { get; set; } = false;
+    [Parameter] public List<MyDocument> MyDocuments { get; set; } = new();
+    [Parameter] public EventCallback<MyDocument> HandleDeleteIconClicked { get; set; }
+    [Parameter] public EventCallback<MyDocument> HandleDownloadIconClicked { get; set; }
+
+    private void DeleteIconClicked(MyDocument doc)
+    {
+        HandleDeleteIconClicked.InvokeAsync(doc);
+    }
+
+
+    private void DownloadIconClicked(MyDocument doc)
+    {
+        HandleDownloadIconClicked.InvokeAsync(doc);
+    }
+}

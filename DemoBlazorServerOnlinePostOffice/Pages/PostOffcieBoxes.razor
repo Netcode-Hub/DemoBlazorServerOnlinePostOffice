@@ -1,0 +1,41 @@
+﻿@if (ShowBoxList)
+{
+    <div class="container mt-3">
+        <div class="row">
+            @foreach (var box in Boxes.OrderBy(_ => _.Number))
+            {
+                <div class="col-md-1 col-sm-1 col-xl-1 m-2" style="cursor:pointer">
+                    <div class="card border-1 shadow-lg " style=" background-image: linear-gradient(to right, #947FFF, #F875B3); min-width:120px; margin-left:5px;">
+                        <div class="card border-1 shadow-lg" style=" background-image: linear-gradient(to right, #947FFF, #F875B3);">
+                            <div class="card m-1" style="" @onclick="(async ()=> OpenBox(box.Number))">
+                                <div class="card-body">
+                                    <h6 class="text-center fw-bold">Box @box.Number</h6>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool ShowBoxList { get; set; }
+    [Parameter] public List<Box> Boxes { get; set; } = new();
+    [Parameter] public EventCallback<OpenBox> HandleOpenBoxClicked { get; set; }
+
+    public string? Key { get; set; }
+    public string? BoxKeyVisibility { get; set; } = "hidden";
+
+    private async void OpenBox(int boxNumber)
+    {
+        string key = await js.InvokeAsync<string>("prompt", $"Please Enter Box {boxNumber} Key");
+        if (string.IsNullOrEmpty(key) || string.IsNullOrWhiteSpace(key)) return;
+
+        var openBox = new OpenBox() { BoxNumber = boxNumber, Key = key };
+        await HandleOpenBoxClicked.InvokeAsync(openBox);
+    }
+
+
+}
